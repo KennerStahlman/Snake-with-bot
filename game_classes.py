@@ -79,6 +79,10 @@ class Player(pygame.sprite.Sprite):
         # Compute valid moves
         valid_moves = {dir: pos for dir, pos in moves.items()
                        if pos not in body_positions and 0 <= pos[0] < self.grid_width and 0 <= pos[1] < self.grid_height}
+        
+        if not valid_moves:
+            self.living = False
+            return  # Snake stops moving and dies
 
         if not valid_moves:
             return  # Do nothing if no valid moves exist
@@ -106,7 +110,7 @@ class Player(pygame.sprite.Sprite):
         elif head_y < food_position[1] and "down" in valid_moves:
             greedy_move = "down"
 
-        # 3️⃣ If greedy move is safe and keeps a path to food, take it
+
         if greedy_move and greedy_move in valid_moves:
             future_space = self.flood_fill(valid_moves[greedy_move])
             if best_move and future_space < max_space:
@@ -116,15 +120,19 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.direction = best_move if best_move else max(valid_moves, key=lambda d: self.flood_fill(valid_moves[d]))
 
-        # 4️⃣ If no greedy move is safe, use flood fill to escape
+
         elif best_move:
             self.direction = best_move
 
-        # 5️⃣ If no good move exists, pick the move with the most open space
+
         elif valid_moves:
             self.direction = max(valid_moves, key=lambda d: self.flood_fill(valid_moves[d]))  # Pick the safest move
 
-        # Move the snake's head based on direction
+        if not self.direction:
+            self.living = False
+            return
+
+
         if self.direction:
             if self.direction == 'left':
                 head_x -= 1
@@ -135,14 +143,14 @@ class Player(pygame.sprite.Sprite):
             elif self.direction == 'down':
                 head_y += 1
 
-            # Insert new head position at the front of the list
+
             self.body.insert(0, (head_x, head_y))
 
-            # If the snake ate food, don't remove the tail
+
             if not self.grow_flag:
-                self.body.pop()  # Remove last segment to keep length
+                self.body.pop()
             else:
-                self.grow_flag = False  # Reset growth flag
+                self.grow_flag = False  
 
     # def better_greedy(self, food_position):
     #     if self.living:
@@ -172,7 +180,6 @@ class Player(pygame.sprite.Sprite):
             
     #         if self.direction not in valid_moves and valid_moves:
     #             self.direction = next(iter(valid_moves))
-    #         # Move the snake's head based on direction
     #         if self.direction:
 
     #             if self.direction == 'left':
@@ -184,14 +191,12 @@ class Player(pygame.sprite.Sprite):
     #             elif self.direction == 'down':
     #                 head_y += 1
 
-    #             # Insert new head position at the front of the list
     #             self.body.insert(0, (head_x, head_y))
 
-    #             # If the snake ate food, don't remove the tail
     #             if not self.grow_flag:
-    #                 self.body.pop()  # Remove last segment to keep length
+    #                 self.body.pop() 
     #             else:
-    #                 self.grow_flag = False  # Reset growth flag
+    #                 self.grow_flag = False  
 
     # def greedy_algo(self, food_position):
     #     if self.living:
@@ -204,7 +209,6 @@ class Player(pygame.sprite.Sprite):
     #         if self.body[0][1] < food_position[1] and self.direction != "up":
     #             self.direction = "down"
             
-    #         # Move the snake's head based on direction
     #         if self.direction:
     #             head_x, head_y = self.body[0]  # Get the head position
 
@@ -217,19 +221,16 @@ class Player(pygame.sprite.Sprite):
     #             elif self.direction == 'down':
     #                 head_y += 1
 
-    #             # Insert new head position at the front of the list
     #             self.body.insert(0, (head_x, head_y))
 
-    #             # If the snake ate food, don't remove the tail
     #             if not self.grow_flag:
-    #                 self.body.pop()  # Remove last segment to keep length
+    #                 self.body.pop()  
     #             else:
-    #                 self.grow_flag = False  # Reset growth flag
+    #                 self.grow_flag = False 
 
 
     # def move(self, keys):
     #     if self.living:
-    #         # Handle user input, but prevent reversing direction
     #         if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.direction != "right":
     #             self.direction = "left"
     #         elif (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and self.direction != "left":
@@ -239,7 +240,7 @@ class Player(pygame.sprite.Sprite):
     #         elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and self.direction != "up":
     #             self.direction = "down"
             
-    #         # Move the snake's head based on direction
+
     #         if self.direction:
     #             head_x, head_y = self.body[0]  # Get the head position
 
@@ -252,17 +253,17 @@ class Player(pygame.sprite.Sprite):
     #             elif self.direction == 'down':
     #                 head_y += 1
 
-    #             # Insert new head position at the front of the list
+
     #             self.body.insert(0, (head_x, head_y))
 
-    #             # If the snake ate food, don't remove the tail
+
     #             if not self.grow_flag:
-    #                 self.body.pop()  # Remove last segment to keep length
+    #                 self.body.pop()
     #             else:
-    #                 self.grow_flag = False  # Reset growth flag
+    #                 self.grow_flag = False
 
     def draw(self, screen):
-        # Draw the snake body using tile_size for scaling
+
         for segment in self.body:
             x, y = segment[0] * self.tile_size, segment[1] * self.tile_size
             pygame.draw.rect(screen, self.color, (x, y, self.tile_size, self.tile_size))
@@ -270,11 +271,11 @@ class Player(pygame.sprite.Sprite):
     def collisions(self):
         head_x, head_y = self.body[0]
 
-        # Check wall collisions
+
         if head_x < 0 or head_x >= self.grid_width or head_y < 0 or head_y >= self.grid_height:
             self.living = False
 
-        # Check self-collision (head hitting body)
+
         if (head_x, head_y) in self.body[1:]:
             self.living = False
 
@@ -290,8 +291,8 @@ class Food(pygame.sprite.Sprite):
         self.grid_height = grid_height
         self.color = color
         
-        # Use grid positions (0-19) instead of pixels
-        self.position = (x, y)  # List to store (row, col) positions
+
+        self.position = (x, y) 
 
 
     def draw(self, screen):

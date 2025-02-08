@@ -3,12 +3,11 @@ import pygame
 import game_classes
 import random
 
-# Core Elements and variables
 pygame.init()
 
 tile_size = 30
-columns = 40
-rows = 40
+columns = 20
+rows = 20
 width, height = rows * tile_size, columns * tile_size
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
@@ -23,15 +22,15 @@ def reset_game():
     food = game_classes.Food(9,9,tile_size,'red', rows, columns)
     all_sprites = pygame.sprite.Group()
     all_sprites.add(food ,player)
-    frame_count = 0  # Reset frame counter
+    frame_count = 0  
 
 
-# Movement control variables
+
 FPS = 60
-MOVE_DELAY = 1  # Move every 6 frames (~10 moves per second at 60 FPS)
-frame_count = 0  # Keeps track of frames
+MOVE_DELAY = 1
+frame_count = 0
 
-# Initialize the first game instance
+
 reset_game()
 
 while True:
@@ -39,7 +38,6 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        # Restart the game if SPACE is pressed after dying
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and not player.living:
             reset_game()
 
@@ -47,7 +45,6 @@ while True:
 
     keys = pygame.key.get_pressed()
 
-    # Only move the snake every MOVE_DELAY frames
     if player.living:
         if player.body[0] == food.position:
             while food.position in player.body:
@@ -61,12 +58,13 @@ while True:
         player.collisions()
 
 
-    if not player.living:
-        death_message = font.render("You died - Press SPACE to restart", True, 'white')
-        screen.blit(death_message, (10, 10))
 
     for sprite in all_sprites:
         sprite.draw(screen)
+
+    if not player.living:
+        death_message = font.render("You died - Press SPACE to restart", True, 'white')
+        screen.blit(death_message, (10, 10))
 
     pygame.display.flip()
     clock.tick(FPS)
