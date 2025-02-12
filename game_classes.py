@@ -10,10 +10,69 @@ class Player(pygame.sprite.Sprite):
         self.color = color
         
         # Use grid positions (0-19) instead of pixels
-        self.body = [(x, y), (x - 1, y), (x - 2, y), (x - 3, y)]
+        self.body = [(x, y)]
         self.direction = "right"
         self.living = True
         self.grow_flag = False  # Controls whether the snake should grow
+
+    def hamiltonian_cycle(self, width, height, foodposition, score):
+        head_x, head_y = self.body[0]
+        if len(self.body) > width * height /2.5 or foodposition[1] == 0:
+            if width % 2 == 0:
+                if head_x % 2 == 0 and (head_y != 0 or head_x == 0):
+                    self.direction = "down"
+                if head_y == height-1:
+                    self.direction = "right"
+                if head_x % 2 != 0 :
+                    self.direction = "up"
+                if head_y == 1 and head_x != 0 and head_x != width-1 and head_x % 2 != 0:
+                    self.direction = "right"
+                if head_y == 0 and head_x != 0:
+                    self.direction = "left"
+        elif foodposition[1] != 0 and foodposition[1] not in [i for i in range(height) if i > height/2]:
+            if width % 2 == 0:
+                if head_x % 2 == 0 and (head_y != 0 or head_x == 0):
+                    self.direction = "down"
+                if head_y > foodposition[1]+height/2.4:
+                    self.direction = "right"
+                if head_x % 2 != 0 :
+                    self.direction = "up"
+                if head_y <= foodposition[1] and head_x != 0 and head_x != width-1 and head_x % 2 != 0:
+                    self.direction = "right"
+                if head_y == 0 and head_x != 0:
+                    self.direction = "left"
+
+        else:
+            if width % 2 == 0:
+                if head_x % 2 == 0 and (head_y != 0 or head_x == 0):
+                    self.direction = "down"
+                if head_y >= foodposition[1]:
+                    self.direction = "right"
+                if head_x % 2 != 0 :
+                    self.direction = "up"
+                if head_y <= foodposition[1] - height/2.4  and head_x != 0 and head_x != width-1 and head_x % 2 != 0:
+                    self.direction = "right"
+                if head_y == 0 and head_x != 0:
+                    self.direction = "left"
+        
+        if self.direction:
+            if self.direction == 'left':
+                head_x -= 1
+            elif self.direction == 'right':
+                head_x += 1
+            elif self.direction == 'up':
+                head_y -= 1
+            elif self.direction == 'down':
+                head_y += 1
+
+
+            self.body.insert(0, (head_x, head_y))
+
+
+            if not self.grow_flag:
+                self.body.pop()
+            else:
+                self.grow_flag = False  
 
     def flood_fill(self, start_pos):
         """Returns the number of open spaces reachable from start_pos."""
@@ -152,115 +211,115 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.grow_flag = False  
 
-    # def better_greedy(self, food_position):
-    #     if self.living:
+    def better_greedy(self, food_position):
+        if self.living:
             
-    #         head_x, head_y = self.body[0]
+            head_x, head_y = self.body[0]
 
-    #         body_positions = set(self.body[1:])
+            body_positions = set(self.body[1:])
 
-    #         moves = {
-    #             "left":  (head_x - 1, head_y),
-    #             "right": (head_x + 1, head_y),
-    #             "up":    (head_x, head_y - 1),
-    #             "down":  (head_x, head_y + 1)
-    #         }
+            moves = {
+                "left":  (head_x - 1, head_y),
+                "right": (head_x + 1, head_y),
+                "up":    (head_x, head_y - 1),
+                "down":  (head_x, head_y + 1)
+            }
 
-    #         valid_moves = {dir for dir, pos in moves.items() if pos not in body_positions and 0 <= pos[0] < self.grid_width and 0<= pos[1] < self.grid_height}
-    #         print(valid_moves)
+            valid_moves = {dir for dir, pos in moves.items() if pos not in body_positions and 0 <= pos[0] < self.grid_width and 0<= pos[1] < self.grid_height}
+            print(valid_moves)
             
-    #         if self.body[0][0] > food_position[0] and "left" in valid_moves:
-    #             self.direction = "left"
-    #         elif self.body[0][0] < food_position[0] and "right" in valid_moves:
-    #             self.direction = "right"
-    #         elif self.body[0][1] > food_position[1] and "up" in valid_moves:
-    #             self.direction = "up"
-    #         elif self.body[0][1] < food_position[1] and "down" in valid_moves:
-    #             self.direction = "down"
+            if self.body[0][0] > food_position[0] and "left" in valid_moves:
+                self.direction = "left"
+            elif self.body[0][0] < food_position[0] and "right" in valid_moves:
+                self.direction = "right"
+            elif self.body[0][1] > food_position[1] and "up" in valid_moves:
+                self.direction = "up"
+            elif self.body[0][1] < food_position[1] and "down" in valid_moves:
+                self.direction = "down"
             
-    #         if self.direction not in valid_moves and valid_moves:
-    #             self.direction = next(iter(valid_moves))
-    #         if self.direction:
+            if self.direction not in valid_moves and valid_moves:
+                self.direction = next(iter(valid_moves))
+            if self.direction:
 
-    #             if self.direction == 'left':
-    #                 head_x -= 1
-    #             elif self.direction == 'right':
-    #                 head_x += 1
-    #             elif self.direction == 'up':
-    #                 head_y -= 1
-    #             elif self.direction == 'down':
-    #                 head_y += 1
+                if self.direction == 'left':
+                    head_x -= 1
+                elif self.direction == 'right':
+                    head_x += 1
+                elif self.direction == 'up':
+                    head_y -= 1
+                elif self.direction == 'down':
+                    head_y += 1
 
-    #             self.body.insert(0, (head_x, head_y))
+                self.body.insert(0, (head_x, head_y))
 
-    #             if not self.grow_flag:
-    #                 self.body.pop() 
-    #             else:
-    #                 self.grow_flag = False  
+                if not self.grow_flag:
+                    self.body.pop() 
+                else:
+                    self.grow_flag = False  
 
-    # def greedy_algo(self, food_position):
-    #     if self.living:
-    #         if self.body[0][0] > food_position[0] and self.direction != "right" :
-    #             self.direction = "left"
-    #         if self.body[0][0] < food_position[0] and self.direction != "left":
-    #             self.direction = "right"
-    #         if self.body[0][1] > food_position[1] and self.direction != "down":
-    #             self.direction = "up"
-    #         if self.body[0][1] < food_position[1] and self.direction != "up":
-    #             self.direction = "down"
+    def greedy_algo(self, food_position):
+        if self.living:
+            if self.body[0][0] > food_position[0] and self.direction != "right" :
+                self.direction = "left"
+            if self.body[0][0] < food_position[0] and self.direction != "left":
+                self.direction = "right"
+            if self.body[0][1] > food_position[1] and self.direction != "down":
+                self.direction = "up"
+            if self.body[0][1] < food_position[1] and self.direction != "up":
+                self.direction = "down"
             
-    #         if self.direction:
-    #             head_x, head_y = self.body[0]  # Get the head position
+            if self.direction:
+                head_x, head_y = self.body[0]  # Get the head position
 
-    #             if self.direction == 'left':
-    #                 head_x -= 1
-    #             elif self.direction == 'right':
-    #                 head_x += 1
-    #             elif self.direction == 'up':
-    #                 head_y -= 1
-    #             elif self.direction == 'down':
-    #                 head_y += 1
+                if self.direction == 'left':
+                    head_x -= 1
+                elif self.direction == 'right':
+                    head_x += 1
+                elif self.direction == 'up':
+                    head_y -= 1
+                elif self.direction == 'down':
+                    head_y += 1
 
-    #             self.body.insert(0, (head_x, head_y))
+                self.body.insert(0, (head_x, head_y))
 
-    #             if not self.grow_flag:
-    #                 self.body.pop()  
-    #             else:
-    #                 self.grow_flag = False 
+                if not self.grow_flag:
+                    self.body.pop()  
+                else:
+                    self.grow_flag = False 
 
 
-    # def move(self, keys):
-    #     if self.living:
-    #         if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.direction != "right":
-    #             self.direction = "left"
-    #         elif (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and self.direction != "left":
-    #             self.direction = "right"
-    #         elif (keys[pygame.K_UP] or keys[pygame.K_w]) and self.direction != "down":
-    #             self.direction = "up"
-    #         elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and self.direction != "up":
-    #             self.direction = "down"
+    def move(self, keys):
+        if self.living:
+            if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.direction != "right":
+                self.direction = "left"
+            elif (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and self.direction != "left":
+                self.direction = "right"
+            elif (keys[pygame.K_UP] or keys[pygame.K_w]) and self.direction != "down":
+                self.direction = "up"
+            elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and self.direction != "up":
+                self.direction = "down"
             
 
-    #         if self.direction:
-    #             head_x, head_y = self.body[0]  # Get the head position
+            # if self.direction:
+            #     head_x, head_y = self.body[0]  # Get the head position
 
-    #             if self.direction == 'left':
-    #                 head_x -= 1
-    #             elif self.direction == 'right':
-    #                 head_x += 1
-    #             elif self.direction == 'up':
-    #                 head_y -= 1
-    #             elif self.direction == 'down':
-    #                 head_y += 1
-
-
-    #             self.body.insert(0, (head_x, head_y))
+            #     if self.direction == 'left':
+            #         head_x -= 1
+            #     elif self.direction == 'right':
+            #         head_x += 1
+            #     elif self.direction == 'up':
+            #         head_y -= 1
+            #     elif self.direction == 'down':
+            #         head_y += 1
 
 
-    #             if not self.grow_flag:
-    #                 self.body.pop()
-    #             else:
-    #                 self.grow_flag = False
+            #     self.body.insert(0, (head_x, head_y))
+
+
+            #     if not self.grow_flag:
+            #         self.body.pop()
+            #     else:
+            #         self.grow_flag = False
 
     def draw(self, screen):
 
