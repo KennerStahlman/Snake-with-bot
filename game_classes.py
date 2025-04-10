@@ -9,102 +9,77 @@ class Player(pygame.sprite.Sprite):
         self.grid_height = grid_height
         self.color = color
         
-        # Use grid positions (0-19) instead of pixels
-        self.body = [(x, y)]
+        self.body = [(x+2, y+2), (x+1, y+2)]
         self.direction = "right"
         self.living = True
-        self.grow_flag = False  # Controls whether the snake should grow
-        self.hamiltonian_cycle = None  # Store the cycle
-        self.current_cycle_index = 0  # Track position in cycle
-        self.generate_hamiltonian_cycle()  # Generate cycle on initialization
+        self.grow_flag = False 
+        # self.hamiltonian_cycle = None  # Store the cycle
+        # self.current_cycle_index = 0 
+        # self.generate_hamiltonian_cycle()  # Generate cycle on initialization
 
     def generate_hamiltonian_cycle(self):
-        """Generate a cyclic path that visits every square exactly once."""
-        # Calculate grid boundaries based on grid dimensions
         x_start = 2
         y_start = 2
-        x_end = x_start + self.grid_width - 1
-        y_end = y_start + self.grid_height - 1
+        x_end = x_start + self.grid_width -1
+        y_end = y_start + self.grid_height -1
         
-        # Create a dictionary to store the next position for each coordinate
+
         next_pos = {}
         
-        # If width is even, use column-pairing method
+
         if self.grid_width % 2 == 0:
-            # Create the zigzag pattern
             for y in range(y_start, y_end + 1):
                 if (y - y_start) % 2 == 0:
-                    # Left to right
                     for x in range(x_start, x_end):
                         next_pos[(x, y)] = (x + 1, y)
-                    # At the end of the row, move down
                     next_pos[(x_end, y)] = (x_end, y + 1)
                 else:
-                    # Right to left
                     for x in range(x_end, x_start, -1):
                         next_pos[(x, y)] = (x - 1, y)
-                    # At the start of the row, move down
                     next_pos[(x_start, y)] = (x_start, y + 1)
             
-            # Handle the right edge for looping back
             for y in range(y_end, y_start, -1):
                 next_pos[(x_end, y)] = (x_end, y - 1)
             
-            # Connect back to start
             next_pos[(x_end, y_start)] = (x_start, y_start)
         
-        # If height is even, use row-pairing method
         elif self.grid_height % 2 == 0:
-            # Create the zigzag pattern
             for x in range(x_start, x_end + 1):
                 if (x - x_start) % 2 == 0:
-                    # Top to bottom
                     for y in range(y_start, y_end):
                         next_pos[(x, y)] = (x, y + 1)
-                    # At the bottom of the column, move right
                     next_pos[(x, y_end)] = (x + 1, y_end)
                 else:
-                    # Bottom to top
                     for y in range(y_end, y_start, -1):
                         next_pos[(x, y)] = (x, y - 1)
-                    # At the top of the column, move right
                     next_pos[(x, y_start)] = (x + 1, y_start)
             
-            # Handle the bottom edge for looping back
             for x in range(x_end, x_start, -1):
                 next_pos[(x, y_end)] = (x - 1, y_end)
             
-            # Connect back to start
             next_pos[(x_start, y_end)] = (x_start, y_start)
         
         self.hamiltonian_cycle = next_pos
 
-    def follow_hamiltonian_cycle(self):
+    def follow_hamiltonian_cycle(self, width, height):
         """Use the Hamiltonian cycle to determine next move."""
         head_x, head_y = self.body[0]
         
-        # Adjust coordinates to be relative to the grid (0-9 instead of 2-11)
         rel_x = head_x - 2
         rel_y = head_y - 2
         
-        # Grid dimensions (10x10)
-        width = 10
-        height = 10
-        
-        # Basic zigzag pattern
-        if width % 2 == 0:
-            if rel_x % 2 == 0 and (rel_y != 0 or rel_x == 0):
-                self.direction = "down"
-            if rel_y == height-1:
-                self.direction = "right"
-            if rel_x % 2 != 0:
-                self.direction = "up"
-            if rel_y == 1 and rel_x != 0 and rel_x != width-1 and rel_x % 2 != 0:
-                self.direction = "right"
-            if rel_y == 0 and rel_x != 0:
-                self.direction = "left"
-        
-        # Move the snake
+        width = width
+        height = height
+        print(self.body[0])
+        print(self.hamiltonian_cycle[self.body[0]])
+        if self.body[0][0] > self.hamiltonian_cycle[self.body[0]][0]:
+            self.direction == 'left'
+        if self.body[0][0] < self.hamiltonian_cycle[self.body[0]][0]:
+            self.direction == 'right'
+        if self.body[0][1] > self.hamiltonian_cycle[self.body[0]][1]:
+            self.direction == 'up'
+        if self.body[0][1] < self.hamiltonian_cycle[self.body[0]][1]:
+            self.direction == 'down'
         if self.direction:
             if self.direction == 'left':
                 head_x -= 1
@@ -151,7 +126,7 @@ class Player(pygame.sprite.Sprite):
         visited = set()
         visited.add(start_pos)
 
-        tail = self.body[-1]  # Allow movement into the last tail position
+        tail = self.body[-1]
 
         while queue:
             x, y = queue.popleft()
@@ -167,7 +142,7 @@ class Player(pygame.sprite.Sprite):
                     queue.append((nx, ny))
                     visited.add((nx, ny))
 
-        return False  # No path found to the food
+        return False
 
     def bfs(self, food_position):
         """Determines the best move using BFS-based logic with flood fill and path checking."""
@@ -175,9 +150,8 @@ class Player(pygame.sprite.Sprite):
             return
 
         head_x, head_y = self.body[0]
-        body_positions = set(self.body[1:])  # Keep entire body except head
+        body_positions = set(self.body[1:])
 
-        # Define possible moves
         moves = {
             "left":  (head_x - 1, head_y),
             "right": (head_x + 1, head_y),
@@ -185,13 +159,12 @@ class Player(pygame.sprite.Sprite):
             "down":  (head_x, head_y + 1)
         }
 
-        # Compute valid moves
         valid_moves = {dir: pos for dir, pos in moves.items()
                        if pos not in body_positions and 1 < pos[0] < self.grid_width+2 and 1 < pos[1] < self.grid_height+2}
         
         if not valid_moves:
             self.living = False
-            return  # Snake stops moving and dies
+            return
 
         if not valid_moves:
             return 
@@ -220,9 +193,9 @@ class Player(pygame.sprite.Sprite):
         if greedy_move and greedy_move in valid_moves:
             future_space = self.flood_fill(valid_moves[greedy_move])
             if best_move and future_space < max_space:
-                self.direction = best_move  # Flood fill is better
+                self.direction = best_move
             elif future_space > len(self.body) * 1.5 and self.path_to_food(valid_moves[greedy_move], food_position):
-                self.direction = greedy_move  # Greedy move is safe
+                self.direction = greedy_move
             else:
                 self.direction = best_move if best_move else max(valid_moves, key=lambda d: self.flood_fill(valid_moves[d]))
 
@@ -232,7 +205,7 @@ class Player(pygame.sprite.Sprite):
 
 
         elif valid_moves:
-            self.direction = max(valid_moves, key=lambda d: self.flood_fill(valid_moves[d]))  # Pick the safest move
+            self.direction = max(valid_moves, key=lambda d: self.flood_fill(valid_moves[d]))
 
         if not self.direction:
             self.living = False
@@ -316,7 +289,7 @@ class Player(pygame.sprite.Sprite):
                 self.direction = "down"
             
             if self.direction:
-                head_x, head_y = self.body[0]  # Get the head position
+                head_x, head_y = self.body[0]
 
                 if self.direction == 'left':
                     head_x -= 1
@@ -338,7 +311,6 @@ class Player(pygame.sprite.Sprite):
     def move(self, keys):
         self.collisions()
         if self.living:
-            # Check for key presses first
             if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.direction != "right":
                 self.direction = "left"
             elif (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and self.direction != "left":
@@ -347,14 +319,10 @@ class Player(pygame.sprite.Sprite):
                 self.direction = "up"
             elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and self.direction != "up":
                 self.direction = "down"
-            else:
-                # If no keys are pressed, follow the Hamiltonian cycle
-                self.follow_hamiltonian_cycle()
-                return  # Exit early since follow_hamiltonian_cycle handles movement
 
-            # Only execute this if we're not following the cycle
+
             if self.direction:
-                head_x, head_y = self.body[0]  # Get the head position
+                head_x, head_y = self.body[0]
 
                 if self.direction == 'left':
                     head_x -= 1
@@ -404,7 +372,7 @@ class Food(pygame.sprite.Sprite):
         self.color = color
         
 
-        self.position = (x, y) 
+        self.position = (x+2, y+2) 
 
 
     def draw(self, screen):
