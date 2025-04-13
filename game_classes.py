@@ -1,6 +1,16 @@
 import pygame
 from collections import deque
 
+
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, width, height, x ,y, color, tile_size):
+        super().__init__()
+        self.tile_size = tile_size
+        self.color = color
+        self.rect = pygame.Rect((x+2)*tile_size, (y+2)*tile_size, width*tile_size, height*tile_size)
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, tile_size, color, grid_width, grid_height):
         super().__init__()
@@ -308,8 +318,8 @@ class Player(pygame.sprite.Sprite):
                     self.grow_flag = False 
 
 
-    def move(self, keys):
-        self.collisions()
+    def move(self, keys,obstacles):
+        self.collisions(obstacles)
         if self.living:
             if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and self.direction != "right":
                 self.direction = "left"
@@ -334,10 +344,10 @@ class Player(pygame.sprite.Sprite):
                     head_y += 1
 
                 self.body.insert(0, (head_x, head_y))
-                self.collisions()
-                if self.living == False:
-                    self.body.remove((head_x,head_y))
-                elif not self.grow_flag:
+                self.collisions(obstacles)
+                if not self.living:
+                    self.body.remove((head_x, head_y))
+                if not self.grow_flag:
                     self.body.pop()
                 else:
                     self.grow_flag = False
@@ -348,9 +358,11 @@ class Player(pygame.sprite.Sprite):
             x, y = segment[0] * self.tile_size, segment[1] * self.tile_size
             pygame.draw.rect(screen, self.color, (x, y, self.tile_size, self.tile_size))
 
-    def collisions(self):
+    def collisions(self, obstacles):
         head_x, head_y = self.body[0]
-
+        for obstacle in obstacles:
+            if pygame.Rect.collidepoint(obstacle.rect, head_x*self.tile_size, head_y*self.tile_size):
+                self.living = False
 
         if head_x < 2 or head_x > self.grid_width+1 or head_y < 2 or head_y > self.grid_height+1:
             self.living = False
@@ -378,3 +390,4 @@ class Food(pygame.sprite.Sprite):
     def draw(self, screen):
         x, y = self.position[0] * self.tile_size, self.position[1] * self.tile_size
         pygame.draw.rect(screen, self.color, (x, y, self.tile_size, self.tile_size))
+
